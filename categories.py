@@ -1,4 +1,4 @@
-{
+categories = {
     "einnahmen": [
         "ausbildungfoerderung",
         "bonuszahlungen/tantieme",

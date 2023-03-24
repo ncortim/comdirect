@@ -1,5 +1,5 @@
-from prepare_comdirect_csv import get_file_name, prepare_csv_file, save_df
-from add_receipts import cashReceipts
+from comdirect.prepare_csv import get_file_name, prepare_csv_file, save_df
+from comdirect.add_receipts import cashReceipts
 
 def main():
     filename = get_file_name()
