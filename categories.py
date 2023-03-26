@@ -88,7 +88,8 @@ categories = {
         "lebensmittel/getraenke",
         "uhren/schmuck",
         "geschenke/spenden",
-        "tiere ",
+        "tiere",
+        "barauszahlung"
         "sonstige ausgaben lebenshaltung"
     ],
     "reise": [

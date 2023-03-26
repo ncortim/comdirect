@@ -1,16 +1,13 @@
-import typing
-import shutil
-import json
+from helpers import prompt_list_input, dictionary_keys_to_list
 import pandas as pd
 import glob
 import os
 import re
 from categories import categories
-import inquirer
+from typing import Union
 
 
-def get_file_name(accounting_filename: bool = False):
-# def get_file_name() -> typing.Union[str, bool]:
+def get_file_name(accounting_filename: bool = False) -> Union[str, bool]:
     """
     Gets name of file if is present in current directory,
     otherwise returns false
@@ -30,37 +27,31 @@ def get_file_name(accounting_filename: bool = False):
             return filename[0]
         return False
 
-def get_key_by_value(dictionary: dict, value_to_find: str) -> typing.Any:
-    """
-    Given a value it returns the corresponding
-    key in a dictionary 
+
+def create_dataframe(filename: str) -> pd.DataFrame:
+    """Given a csv file with transactions (comdirect bank),
+    it formats and returns a pandas dataframe
 
     Args:
-        dict ([type]): [description]
-        valueToFind ([type]): [description]
+        filename (str): filename placed in directory ./inputs
 
     Returns:
-        [type]: [description]
+        pd.DataFrame: formatted pandas dataframe ready for further analysis
     """
-    for k, v in dictionary.items():
-        if value_to_find in v:
-            return k
-        # return None
-
-def create_dataframe(filename:str) -> pd.DataFrame:
 
     # read csv file, skip header and footer and encoding umlaut
     # create a dataframe
     df = pd.read_csv(filename,
-                    encoding="ISO-8859-1",
-                    sep=';',
-                    skiprows=4,
-                    skipfooter=7,
-                    engine='python')
-    
+                     encoding="ISO-8859-1",
+                     sep=';',
+                     skiprows=4,
+                     skipfooter=4,
+                     engine='python')
+
     # change format euro decimals and thousands
     df["Umsatz in EUR"] = df["Umsatz in EUR"].str.replace(".", "", regex=True)
-    df["Umsatz in EUR"] = df["Umsatz in EUR"].str.replace(",", ".", regex=True).astype(float)
+    df["Umsatz in EUR"] = df["Umsatz in EUR"].str.replace(
+        ",", ".", regex=True).astype(float)
 
     # drop rows with status 'offen'
     df = df[df.Buchungstag != 'offen']
@@ -79,9 +70,9 @@ def create_dataframe(filename:str) -> pd.DataFrame:
             purchaser = i.split(':', 2)[1].split('Buchungstext')[0].strip()
             if purchaser == 'Lastschrift aus Kartenzahlung':
                 detailed_purchaser = i.split(':', 2)[2].split('//')[0].strip()
-                df.loc[idx, 'Auftraggeber'] =  detailed_purchaser
+                df.loc[idx, 'Auftraggeber'] = detailed_purchaser
             else:
-                df.loc[idx, 'Auftraggeber'] =  purchaser
+                df.loc[idx, 'Auftraggeber'] = purchaser
         # i.split(':', 1)[1].split(':', 1)[0].split('Buchungstext')[0].strip()
         elif description == ' Buchungstext':
             df.loc[idx, 'Auftraggeber'] = re.compile(
@@ -90,10 +81,9 @@ def create_dataframe(filename:str) -> pd.DataFrame:
             df.loc[idx, 'Auftraggeber'] = re.compile(r'Kto').split(i)[0].split(
                 ':', 1)[1].strip()
 
-
     # extract buchungstext from purchase
     for idx, i in enumerate(df['Buchungstext']):
-        description = i.split(':',2)[-1].strip()
+        description = i.split(':', 2)[-1].strip()
         df.loc[idx, 'Beschreibung'] = description
 
     # create a new category
@@ -115,94 +105,125 @@ def create_dataframe(filename:str) -> pd.DataFrame:
 
     df = df.astype(mapping_types_conversion)
 
-    # df['Kategorie'].astype
-
-        # create a new colum for months
+    # create a new colum for months
     df['Month'] = df['Buchungstag'].dt.strftime('%b')
 
     # create a new column for years
     df['Year'] = df['Buchungstag'].dt.strftime('%Y')
+
     # print(df.dtypes)
     # print(df)
 
     return df
 
-def prompt_question(purchaser: str, booking_detail: str, choices: list, euro: float) -> str:
-    questions = [
-            inquirer.List(
-                'category',
-                message=f'Select category: {purchaser}  EURO: {euro}?',
-                choices=choices)
-        ]
-    answers = inquirer.prompt(questions)
 
-    return answers['category']
+def create_dataframe_accounting_csv(filename: str) -> pd.DataFrame:
+    """creates a pandas dataframe from accounting.csv file. This file
+    is located in ./outputs directory and contains the records of all 
+    transactions
 
-def create_dataframe_accounting_csv(filename:str) -> pd.DataFrame:
+    Args:
+        filename (str): path to file
 
-    df = pd.read_csv(filename, encoding="ISO-8859-1",sep=',')
+    Returns:
+        pd.DataFrame: pandas dataframe
+    """
+
+    df = pd.read_csv(filename, encoding="ISO-8859-1", sep=',')
 
     return df
 
 
-def save_df_to_csv(df: pd.DataFrame) -> None:
-    # if cuentas_full.csv exists then append values to it without header and indexes
+def save_df_to_csv(df: pd.DataFrame, filename: str) -> None:
+    """saves formatted pandas dataframe to csv file. Output file is called
+    accounting.csv and is located in ./outputs directory
+
+    Args:
+        df (pd.DataFrame): pandas dataframes
+        filename (str): path to filename
+    """
+    # if accounting.csv exists then append values to it without header and indexes
     # esle create a new one
     if os.path.isfile('./outputs/accounting.csv'):
-        df.to_csv('./outputs/accounting.csv', mode='a', header=False, index=False)
+        df.to_csv('./outputs/accounting.csv',
+                  mode='a',
+                  header=False,
+                  index=False)
     else:
         df.to_csv('./outputs/accounting.csv', index=False)
 
-def categorize_purchases(new_df: pd.DataFrame, accounting_df: pd.DataFrame = None) -> pd.DataFrame:
 
+def categorize_purchases(new_df: pd.DataFrame,
+                         accounting_df: pd.DataFrame = None) -> pd.DataFrame:
+    """give a new dataframe as input, it guides the user to categorize new entries.
+    Categorization occurs through asking in the command line interface. Repeated entries
+    will be categorized automatically
 
-    first_categories = list()
+    Args:
+        new_df (pd.DataFrame): pandas dataframe with new data
+        accounting_df (pd.DataFrame, optional): pandas dataframe with all existing 
+        transactions (historical data). Defaults to None.
 
-    for i in categories:
-        first_categories.append(i)
+    Raises:
+        ValueError: if accounting_df is not given
+
+    Returns:
+        pd.DataFrame: dataframe with new categorized entries
+    """
+
+    first_categories = dictionary_keys_to_list(categories=categories)
 
     for idx, i in enumerate(new_df["Auftraggeber"]):
         # check in value already present in categories dict
         try:
             if i in accounting_df['Auftraggeber'].values:
-                match_indexes = accounting_df[accounting_df['Auftraggeber']==i].index.values
-                repeated_category = accounting_df.at[match_indexes[0], 'Kategorie']
-                repeated_subcategory = accounting_df.at[match_indexes[0], 'Subkategorie']
+                match_indexes = accounting_df[accounting_df['Auftraggeber'] ==
+                                              i].index.values
+                repeated_category = accounting_df.at[match_indexes[0],
+                                                     'Kategorie']
+                repeated_subcategory = accounting_df.at[match_indexes[0],
+                                                        'Subkategorie']
                 new_df.at[idx, 'Kategorie'] = repeated_category
                 new_df.at[idx, 'Subkategorie'] = repeated_subcategory
-            else:               
+            else:
                 raise ValueError
-        except (TypeError, ValueError):     
-            category = prompt_question(i, new_df.at[idx, 'Beschreibung'],first_categories, new_df.at[idx, 'Umsatz in EUR'])
+        except (TypeError, ValueError):
+            euro = new_df.at[idx, 'Umsatz in EUR']
+            message = f'Select category: {i}  EURO: {euro}?'
+
+            category = prompt_list_input(key_value='category',
+                                         message=message,
+                                         choices=first_categories)
 
             new_df.at[idx, 'Kategorie'] = category
 
-            subcategory = prompt_question(i, new_df.at[idx, 'Beschreibung'], categories[category], new_df.at[idx, 'Umsatz in EUR'])
+            subcategory = prompt_list_input(key_value='subcategory',
+                                            message=message,
+                                            choices=categories[category])
             new_df.at[idx, 'Subkategorie'] = subcategory
 
-        
     return new_df
 
 
-new_filename = get_file_name()
-
-accounting_file = get_file_name(accounting_filename=True)
-
-new_df = create_dataframe(filename=new_filename)
-
-
-try:
-    new_df = create_dataframe(filename=new_filename)
-    accounting_df = create_dataframe_accounting_csv(accounting_file)
-except ValueError:
-    print("file does not exist yet")
-
-try:
-    new_df = categorize_purchases(new_df, accounting_df)
-except NameError:
-    new_df = categorize_purchases(new_df)
-
-save_df_to_csv(new_df)
-
-shutil.copy(new_filename, './raw_files/')
-os.remove(new_filename)
+#new_filename = get_file_name()
+#
+#accounting_file = get_file_name(accounting_filename=True)
+#
+#new_df = create_dataframe(filename=new_filename)
+#
+#
+#try:
+#    new_df = create_dataframe(filename=new_filename)
+#    accounting_df = create_dataframe_accounting_csv(accounting_file)
+#except ValueError:
+#    print("file does not exist yet")
+#
+#try:
+#    new_df = categorize_purchases(new_df, accounting_df)
+#except NameError:
+#    new_df = categorize_purchases(new_df)
+#
+#save_df_to_csv(new_df)
+#
+#shutil.copy(new_filename, './raw_files/')
+#os.remove(new_filename)
