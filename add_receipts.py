@@ -111,35 +111,12 @@ def get_receipts_details() -> dict:
         message="To which subcategory corresponds this receipt",
         choices=categories[category])
 
-    # questions = [
-    #     prom
-    #     inquirer.Text(
-    #         'Buchungstag', message="Receipt date in the folowing format YEAR-MONTH_DAY (e.g. 2020-07-08)", validate=buchungstag_validation),
-    #     inquirer.Text(
-    #         'Umsatz in EUR', message="Amount of money in the folowing format (e.g -5804.34 or 19.24) comma values are not allowed", validate=amount_validation),
-    #     inquirer.Text('Auftraggeber', message="Buy description"),
-    #     inquirer.List(
-    #         'Category', message="To which category corresponds this receipt", choices=first_categories),
-    #     inquirer.List(
-    #                 'Subcategory', message="To which subcategory corresponds this receipt", choices=first_categories)
-
-    # ]
-
-    # answers = inquirer.prompt(questions)
     answers['Buchungstag'] = booking_day
     answers['Kategorie'] = category
     answers['Umsatz in EUR'] = amount
     answers['Subkategorie'] = subcategory
 
     return answers
-
-
-# def substract_caja_chica(month: int, dafr: pd.DataFrame) -> None:
-#     value_caja_chica = dafr.loc[(dafr['Category'] == 'caja chica') & (dafr['Month'] == month), 'Umsatz in EUR']
-#     value_receipts = dafr.loc[(dafr['Buchungstext'] == 'receipts') & (dafr['Month'] == month), 'Umsatz in EUR'].sum()
-#     final_value = value_caja_chica.iloc[0] + value_receipts
-#     index = dafr.index[(dafr['Category'] == 'caja chica') & (dafr['Month'] == month)]
-#     dafr['Umsatz in EUR'][index] = final_value
 
 
 def add_receipts_to_csv(receipts_details: dict) -> Any:
@@ -167,11 +144,10 @@ def add_receipts_to_csv(receipts_details: dict) -> Any:
 
         df = pd.DataFrame(columns=columns)
 
-
     df = df.append(receipts_details, ignore_index=True)
     df['Buchungstext'] = df['Buchungstext'].fillna(value='receipts')
     df['Vorgang'] = df['Vorgang'].fillna(value='Barauszahlung')
-    
+
     # substract_caja_chica()
     df['Buchungstag'] = pd.to_datetime(df['Buchungstag'], dayfirst=True)
 
@@ -182,8 +158,6 @@ def add_receipts_to_csv(receipts_details: dict) -> Any:
     df['Year'] = df['Buchungstag'].dt.strftime('%Y')
     df.fillna('NaN')
     df.to_csv('./outputs/accounting.csv', index=False)
-
-
 
 
 def cash_receipts():

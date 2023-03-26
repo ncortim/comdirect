@@ -20,8 +20,6 @@ def dictionary_keys_to_list(categories: dict) -> list:
     return first_categories
 
 
-#def prompt_question(purchaser: str, booking_detail: str, choices: list, euro: float) -> str:
-#def prompt_question(purchaser: str, choices: list, euro: float) -> str:
 def prompt_list_input(key_value: str, message: str, choices: list) -> str:
     """aks users in a CLI to choose for a given option
 

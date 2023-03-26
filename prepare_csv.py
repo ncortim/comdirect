@@ -38,7 +38,6 @@ def create_dataframe(filename: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: formatted pandas dataframe ready for further analysis
     """
-
     # read csv file, skip header and footer and encoding umlaut
     # create a dataframe
     df = pd.read_csv(filename,
@@ -110,9 +109,6 @@ def create_dataframe(filename: str) -> pd.DataFrame:
 
     # create a new column for years
     df['Year'] = df['Buchungstag'].dt.strftime('%Y')
-
-    # print(df.dtypes)
-    # print(df)
 
     return df
 
@@ -204,26 +200,3 @@ def categorize_purchases(new_df: pd.DataFrame,
 
     return new_df
 
-
-#new_filename = get_file_name()
-#
-#accounting_file = get_file_name(accounting_filename=True)
-#
-#new_df = create_dataframe(filename=new_filename)
-#
-#
-#try:
-#    new_df = create_dataframe(filename=new_filename)
-#    accounting_df = create_dataframe_accounting_csv(accounting_file)
-#except ValueError:
-#    print("file does not exist yet")
-#
-#try:
-#    new_df = categorize_purchases(new_df, accounting_df)
-#except NameError:
-#    new_df = categorize_purchases(new_df)
-#
-#save_df_to_csv(new_df)
-#
-#shutil.copy(new_filename, './raw_files/')
-#os.remove(new_filename)
