@@ -7,7 +7,7 @@ from categories import categories
 from typing import Union
 
 
-def get_file_name(accounting_filename: bool = False) -> Union[str, bool]:
+def get_file_name(accounting_filename: bool = False) -> str | bool:
     """
     Gets name of file if is present in current directory,
     otherwise returns false
@@ -199,4 +199,3 @@ def categorize_purchases(new_df: pd.DataFrame,
             new_df.at[idx, 'Subkategorie'] = subcategory
 
     return new_df
-
