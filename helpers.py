@@ -1,4 +1,5 @@
 import inquirer
+from categories import categories
 from typing import Callable
 
 
@@ -64,7 +65,29 @@ def prompt_text_input(key_value: str, message: str,
 
     return answers[key_value]
 
+def ask_for_category_and_subcategory(message: str, first_categories: list) -> str:
+    """prompt for category and subcategory selection.
 
+    Args:
+        message (str): question ansked for obtaining category
+        first_categories (list): list of first categories
+
+    Returns:
+        str: _description_
+    """
+    category = prompt_list_input(key_value='category',
+                                         message=message,
+                                         choices=first_categories)
+
+    subcategories = ['cancel']
+    subcategories.extend(categories[category])
+
+    subcategory = prompt_list_input(key_value='subcategory',
+                                            message=message,
+                                            choices=subcategories)
+    
+    return category, subcategory
+  
 def get_key_by_value(dictionary: dict, value_to_find: str) -> str:
     """
     Given a value it returns the corresponding

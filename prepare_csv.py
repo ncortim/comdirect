@@ -1,4 +1,4 @@
-from helpers import prompt_list_input, dictionary_keys_to_list
+from helpers import prompt_list_input, dictionary_keys_to_list, ask_for_category_and_subcategory
 import pandas as pd
 import glob
 import os
@@ -170,32 +170,72 @@ def categorize_purchases(new_df: pd.DataFrame,
     first_categories = dictionary_keys_to_list(categories=categories)
 
     for idx, i in enumerate(new_df["Auftraggeber"]):
+        euro = new_df.at[idx, 'Umsatz in EUR']
+        booking_day = new_df.at[idx, 'Buchungstag']
+        
+        message = f'Select category: {i}  EURO: {euro} DATE: {booking_day.date()}?'
         # check in value already present in categories dict
         try:
             if i in accounting_df['Auftraggeber'].values:
-                match_indexes = accounting_df[accounting_df['Auftraggeber'] ==
+                #get all subcategories from all repeated values
+                matched_indexes = accounting_df[accounting_df['Auftraggeber'] ==
                                               i].index.values
-                repeated_category = accounting_df.at[match_indexes[0],
-                                                     'Kategorie']
-                repeated_subcategory = accounting_df.at[match_indexes[0],
-                                                        'Subkategorie']
-                new_df.at[idx, 'Kategorie'] = repeated_category
-                new_df.at[idx, 'Subkategorie'] = repeated_subcategory
+ 
+                #if matched_indexes is only one, then do the work automatically without asking
+                if len(matched_indexes) == 1:
+                    # TODO add logger whih are indexed
+                    repeated_category = accounting_df.at[matched_indexes[0],
+                                                         'Kategorie']
+                    repeated_subcategory = accounting_df.at[matched_indexes[0],
+                                                            'Subkategorie']
+                    new_df.at[idx, 'Kategorie'] = repeated_category
+                    new_df.at[idx, 'Subkategorie'] = repeated_subcategory
+    
+                else:
+                    all_existent_categories = []
+
+                    for j in matched_indexes:
+
+                        repeated_category = accounting_df.at[j,'Kategorie']
+                        repeated_subcategory = accounting_df.at[j,'Subkategorie']
+
+                        tuple_category_subcategory = (repeated_category,repeated_subcategory)
+
+                        all_existent_categories.append(tuple_category_subcategory)
+
+                    #reduce the repated values from the repeated values
+                    reduced_all_existent_categories = list(set([k for k in all_existent_categories]))
+
+                    # create list with reduced categories
+                    reduced_choices = ['cancel']
+                    for k in reduced_all_existent_categories:
+                       reduced_choices.append(f"{k[0]},{k[1]}")
+
+                    #ask user if in the reduced value, is the value needed
+                    final_answer = prompt_list_input(key_value='answer',message=message,choices=reduced_choices)
+
+                    #if value needed is not present then ask for category and subcategory
+                    if final_answer == 'cancel':
+                        raise ValueError
+                    else:
+                        new_df.at[idx, 'Kategorie'] = final_answer.split(',')[0]
+                        new_df.at[idx, 'Subkategorie'] = final_answer.split(',')[1]
+    
             else:
                 raise ValueError
         except (TypeError, ValueError):
-            euro = new_df.at[idx, 'Umsatz in EUR']
-            message = f'Select category: {i}  EURO: {euro}?'
+            # euro = new_df.at[idx, 'Umsatz in EUR']
+            # booking_day = new_df.at[idx, 'Buchungstag']
 
-            category = prompt_list_input(key_value='category',
-                                         message=message,
-                                         choices=first_categories)
+            category, subcategory = ask_for_category_and_subcategory(message=message, first_categories=first_categories)
+            
+            while subcategory == 'cancel':
+
+                category, subcategory = ask_for_category_and_subcategory(message=message, first_categories=first_categories)
+                
 
             new_df.at[idx, 'Kategorie'] = category
-
-            subcategory = prompt_list_input(key_value='subcategory',
-                                            message=message,
-                                            choices=categories[category])
             new_df.at[idx, 'Subkategorie'] = subcategory
+
 
     return new_df
