@@ -1,5 +1,5 @@
 from typing import Any
-from helpers import prompt_list_input, prompt_text_input, dictionary_keys_to_list
+from helpers import prompt_text_input, dictionary_keys_to_list, ask_for_category_and_subcategory
 import pandas as pd
 import re
 from inquirer import errors
@@ -47,11 +47,17 @@ def booking_day_validation(answers, current):
     Returns:
         _type_: _description_
     """
+    if current == 'c':
+        return True
     if not re.match(r'\d{4}-\d{2}-\d{2}', current):
         raise errors.ValidationError(
             '', reason='Date format not allowed, please change it')
-    return True
-
+    try:
+        # date_object = datetime.strptime(current, '%Y-%m-%d')
+        pd.to_datetime(current)
+        return True
+    except ValueError:
+        return False
 
 def amount_validation(answers, current):
     """validate amount data input.
@@ -66,6 +72,8 @@ def amount_validation(answers, current):
     Returns:
         _type_: _description_
     """
+    if current == 'c':
+        return True
     if not re.match(r'^[-+]\d*(\.\d+)?$', current):
         raise errors.ValidationError(
             '', reason='Money format not allowed, please change it')
@@ -89,34 +97,39 @@ def get_receipts_details() -> dict:
         'Subkategorie': '',
     }
 
+    category_message = 'To which category corresponds this receipt'
+
     booking_day = prompt_text_input(
         key_value='Buchungstag',
         message=
-        'Receipt date in the folowing format YEAR-MONTH_DAY (e.g. 2020-07-08)',
+        'Receipt date in the folowing format YEAR-MONTH_DAY (e.g. 2020-07-08). Type "c" to cancel and go back',
         validation=booking_day_validation)
 
+    if booking_day == 'c':
+        return False
+    
     amount = prompt_text_input(
         key_value='Umsatz in EUR',
         message=
-        'Amount of money in the folowing format (e.g -5804.34 or +19.24) comma values are not allowed',
+        'Amount of money in the folowing format (e.g -5804.34 or +19.24) comma values are not allowed. Type "c" to cancel',
         validation=amount_validation)
 
-    category = prompt_list_input(
-        key_value='Category',
-        message="To which category corresponds this receipt",
-        choices=first_categories)
+    if amount == 'c':
+        return False
+    
 
-    subcategory = prompt_list_input(
-        key_value='Subcategory',
-        message="To which subcategory corresponds this receipt",
-        choices=categories[category])
+    category, subcategory = ask_for_category_and_subcategory(message=category_message, first_categories=first_categories)
+
+    while subcategory == 'cancel':
+        category, subcategory = ask_for_category_and_subcategory(message=category_message, first_categories=first_categories)
 
     answers['Buchungstag'] = booking_day
     answers['Kategorie'] = category
     answers['Umsatz in EUR'] = amount
     answers['Subkategorie'] = subcategory
 
-    return answers
+    # TODO add logger -> print(answers)    
+    add_receipts_to_csv(answers)
 
 
 def add_receipts_to_csv(receipts_details: dict) -> Any:
@@ -144,7 +157,10 @@ def add_receipts_to_csv(receipts_details: dict) -> Any:
 
         df = pd.DataFrame(columns=columns)
 
-    df = df.append(receipts_details, ignore_index=True)
+    index = len(df.index)
+    df_receipt = pd.DataFrame(data=receipts_details, index=[index])
+    df = pd.concat([df, df_receipt])
+    # df = df.append(receipts_details, ignore_index=True)
     df['Buchungstext'] = df['Buchungstext'].fillna(value='receipts')
     df['Vorgang'] = df['Vorgang'].fillna(value='Barauszahlung')
 
@@ -164,6 +180,6 @@ def cash_receipts():
     """run add receipts functions
     """
     while ask_add_receipts():
-        answers = get_receipts_details()
-        print(answers)
-        add_receipts_to_csv(answers)
+        get_receipts_details()
+        # print(answers)
+        # add_receipts_to_csv(answers)

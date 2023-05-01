@@ -87,7 +87,8 @@ def ask_for_category_and_subcategory(message: str, first_categories: list) -> st
                                             choices=subcategories)
     
     return category, subcategory
-  
+
+ 
 def get_key_by_value(dictionary: dict, value_to_find: str) -> str:
     """
     Given a value it returns the corresponding

@@ -30,8 +30,8 @@ df = df.astype(mapping_types_conversion)
 
 
 df['Month'] = pd.to_datetime(df.Month, format='%b', errors='coerce').dt.month
-df1 = df.groupby(['Kategorie', 'Month', 'Year']).sum()
-df1 = df.groupby(['Subkategorie', 'Month', 'Year']).sum()
+df1 = df.groupby(['Kategorie', 'Month', 'Year']).sum(numeric_only=True)
+# df1 = df.groupby(['Subkategorie', 'Month', 'Year']).sum(numeric_only=True)
 df1 = df1.unstack().unstack(fill_value=0)
 # df1 = df1.unstack()
 # df1 = df1.reset_index()
