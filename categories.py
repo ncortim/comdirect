@@ -50,7 +50,7 @@ categories = {
         "ausgehen/party",
         "restaurants/cafes/bars",
         "hobbys",
-        "vereine/vebaende",
+        "vereine/verbaende",
         "sonstige ausgaben freizeit"
     ],
     "gesundheit": [
