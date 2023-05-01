@@ -1,0 +1,1 @@
+Do you have a comdirect account and want to categorize your tradings. Then this tool might be a solution for you
