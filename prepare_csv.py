@@ -4,7 +4,6 @@ import glob
 import os
 import re
 from categories import categories
-from typing import Union
 
 
 def get_file_name(accounting_filename: bool = False) -> str | bool:
@@ -130,7 +129,7 @@ def create_dataframe_accounting_csv(filename: str) -> pd.DataFrame:
     return df
 
 
-def save_df_to_csv(df: pd.DataFrame, filename: str) -> None:
+def save_df_to_csv(df: pd.DataFrame) -> None:
     """saves formatted pandas dataframe to csv file. Output file is called
     accounting.csv and is located in ./outputs directory
 

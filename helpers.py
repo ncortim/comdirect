@@ -61,6 +61,8 @@ def prompt_text_input(key_value: str, message: str,
             validate=validation,
         )
     ]
+    answers = []
+
     answers = inquirer.prompt(questions)
 
     return answers[key_value]
@@ -95,11 +97,11 @@ def get_key_by_value(dictionary: dict, value_to_find: str) -> str:
     key in a dictionary 
 
     Args:
-        dict ([type]): [description]
-        valueToFind ([type]): [description]
+        dictionary (dict): python dictionary
+        value_to_find (str): value in a dictionary
 
     Returns:
-        [type]: [description]
+        str: dictionary key
     """
     for k, v in dictionary.items():
         if value_to_find in v:

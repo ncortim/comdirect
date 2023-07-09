@@ -30,7 +30,7 @@ def main():
         except NameError:
             new_df = categorize_purchases(new_df)
 
-        save_df_to_csv(new_df, new_filename)
+        save_df_to_csv(new_df)
 
         cash_receipts()
     else:
