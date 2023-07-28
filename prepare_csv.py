@@ -135,7 +135,6 @@ def save_df_to_csv(df: pd.DataFrame) -> None:
 
     Args:
         df (pd.DataFrame): pandas dataframes
-        filename (str): path to filename
     """
     # if accounting.csv exists then append values to it without header and indexes
     # esle create a new one
