@@ -11,7 +11,7 @@ def main():
 
         accounting_file = get_file_name(accounting_filename=True)
 
-        new_df = create_dataframe(filename=new_filename)
+        # new_df = create_dataframe(filename=new_filename)
 
         try:
             new_df = create_dataframe(filename=new_filename)

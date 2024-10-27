@@ -4,6 +4,7 @@ import glob
 import os
 import re
 from categories import categories
+import sys
 
 
 def get_file_name(accounting_filename: bool = False) -> str | bool:
@@ -123,10 +124,22 @@ def create_dataframe_accounting_csv(filename: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: pandas dataframe
     """
+    try:
+        df = pd.read_csv(filename, encoding="ISO-8859-1", sep=',')
+        return df
 
-    df = pd.read_csv(filename, encoding="ISO-8859-1", sep=',')
+    except pd.errors.ParserError as err:
+        print(f"""
+            ##############################################################################
+            ##############################################################################
+            accounting.csv has an error, check the consistency of the file
+            Error is {err}
+            ##############################################################################
+            ##############################################################################
+        """)
+        sys.exit(1)
 
-    return df
+
 
 
 def save_df_to_csv(df: pd.DataFrame) -> None:
